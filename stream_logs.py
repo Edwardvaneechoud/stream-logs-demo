@@ -21,15 +21,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # SSE stream endpoint
 async def format_sse_message(data: str) -> str:
     return f"data: {json.dumps(data)}\n\n"
+
 
 async def stream_counter() -> AsyncGenerator[str, None]:
     for i in range(1, 10):
         yield await format_sse_message(str(i))
         await asyncio.sleep(1)
     yield await format_sse_message("explode!")
+
 
 @app.get("/api/stream")
 async def stream_logs():
@@ -43,10 +46,12 @@ async def stream_logs():
 async def serve_index():
     return FileResponse("static/index.html")
 
+
 # Entry point
 def run():
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 if __name__ == "__main__":
     run()

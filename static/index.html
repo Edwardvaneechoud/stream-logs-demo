@@ -2,150 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <title>Stream Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simple Stream Logs Demo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.global.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <div id="app">
-      <div class="container">
-        <h1>Simple Stream Logs Demo</h1>
-        <button @click="startStreaming" :disabled="isStreaming">Start Streaming</button>
+  <div id="app" class="container">
+    <h1>Live Counter Stream</h1>
+    <button @click="startStreaming" :disabled="isStreaming">Start Streaming</button>
 
-        <div class="log-container">
-          <div v-if="logs.length === 0" class="empty-state">
-            No logs yet. Click "Start Streaming" to begin.
-          </div>
-          <div v-for="(log, index) in logs" :key="index" class="log-line">
-            {{ log }}
-          </div>
-        </div>
+    <div class="log-container">
+      <div v-for="(line, index) in logLines" :key="index" class="log-line">
+        {{ line }}
       </div>
+      <div v-if="isStreaming && numberLine" class="log-line">{{ numberLine }}</div>
     </div>
+  </div>
 
-    <script>
-      const { createApp, ref } = Vue;
-
-      createApp({
-        setup() {
-          const logs = ref([]);
-          const isStreaming = ref(false);
-          let eventSource = null;
-
-          const startStreaming = () => {
-            logs.value = [];
-            isStreaming.value = true;
-
-            // Create new EventSource
-            eventSource = new EventSource('/api/stream');
-
-            eventSource.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data);
-                logs.value.push(data);
-
-                // Auto-scroll to bottom
-                setTimeout(() => {
-                  const logContainer = document.querySelector('.log-container');
-                  if (logContainer) {
-                    logContainer.scrollTop = logContainer.scrollHeight;
-                  }
-                }, 10);
-
-                // If we received the "explode!" message, close the connection
-                if (data === "explode!") {
-                  if (eventSource) {
-                    eventSource.close();
-                    eventSource = null;
-                    isStreaming.value = false;
-                  }
-                }
-              } catch (error) {
-                console.error("Error parsing log data:", error);
-              }
-            };
-
-            eventSource.onerror = (error) => {
-              console.error("EventSource error:", error);
-              if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-                isStreaming.value = false;
-              }
-            };
-          };
-
-          return {
-            logs,
-            isStreaming,
-            startStreaming
-          };
-        }
-      }).mount('#app');
-    </script>
-
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        padding: 20px;
-        background-color: #f5f5f5;
-      }
-
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-
-      h1 {
-        color: #2c3e50;
-        margin-bottom: 20px;
-      }
-
-      button {
-        background-color: #4CAF50;
-        border: none;
-        color: white;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin-bottom: 20px;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-
-      button:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-      }
-
-      .log-container {
-        background-color: #1e1e1e;
-        color: #d4d4d4;
-        border-radius: 4px;
-        padding: 10px;
-        height: 300px;
-        overflow-y: auto;
-        font-family: "Consolas", "Monaco", "Courier New", monospace;
-      }
-
-      .empty-state {
-        color: #777;
-        font-style: italic;
-        text-align: center;
-        padding: 20px;
-      }
-
-      .log-line {
-        padding: 3px 5px;
-        border-bottom: 1px solid #333;
-      }
-    </style>
+    <script src="/static/app.js"></script>
   </body>
 </html>

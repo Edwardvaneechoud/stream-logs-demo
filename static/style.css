@@ -1,0 +1,14 @@
+.log-container {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  padding: 15px;
+  font-family: monospace;
+  border-radius: 5px;
+  margin-top: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.log-line {
+  padding: 3px 0;
+}
