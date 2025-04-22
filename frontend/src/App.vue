@@ -8,7 +8,7 @@ interface LogViewerInstance {
   startStreamingLogs: () => Promise<void>;
   stopStreamingLogs: () => void;
   clearLogs: () => void;
-  addCustomLog: (message: string, level?: "INFO" | "ERROR") => Promise<void>;
+  addCustomLog: (message: string, level?: "INFO" | "ERROR" | "WARNING") => Promise<void>;
   toggleMonitoring: () => Promise<void>;
 }
 
@@ -169,6 +169,7 @@ onUnmounted(() => {
             />
             <select v-model="customLogLevel">
               <option value="INFO">INFO</option>
+              <option value="ERROR">WARNING</option>
               <option value="ERROR">ERROR</option>
             </select>
             <button 

@@ -106,6 +106,7 @@ class SystemMonitor:
 
         self.session_logger.info(system_report)
 
+
     def _log_warning_message(self, metrics: dict) -> None:
         """Generate and log a WARNING level message based on system metrics"""
         if metrics['total_ram_percent'] > 80:
@@ -115,7 +116,12 @@ class SystemMonitor:
         elif metrics['cpu_percent'] > 50:
             self.session_logger.warning(f"High CPU usage detected: {metrics['cpu_percent']:.1f}%")
         else:
-            self.session_logger.warning(f"Potential resource contention.\n  RAM: {metrics['total_ram_percent']:.1f}%\n  Load: {metrics['load1']:.2f}")
+            warning_msg = (
+                f"Potential resource contention.\n"
+                f"  RAM: {metrics['total_ram_percent']:.1f}%\n"
+                f"  Load: {metrics['load1']:.2f}"
+            )
+            self.session_logger.warning(warning_msg)
 
     def _log_error_message(self, metrics: dict) -> None:
         """Generate and log an ERROR level message based on system metrics"""

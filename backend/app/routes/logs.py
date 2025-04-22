@@ -142,7 +142,7 @@ async def stream_log_file(
             while not ServerRun.exit:  # Check for server shutdown
                 line = await file.readline()
                 if line:
-                    formatted_message = await format_sse_message(line.strip())
+                    formatted_message = await format_sse_message(line)
                     yield formatted_message
                     last_active = time.monotonic()  # Reset idle timer on activity
                 else:

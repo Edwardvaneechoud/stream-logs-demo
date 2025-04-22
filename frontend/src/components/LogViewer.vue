@@ -48,15 +48,6 @@ watch(connectionStatus, (status) => {
   emit('update:status', status);
 });
 
-// Watch logs to update log lines and check for errors
-watch(logs, (newLogs) => {
-  logLines.value = newLogs
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-});
-
-// Clear any existing reconnection timer
 const clearReconnectionTimer = (): void => {
   if (reconnectionTimer.value !== null) {
     clearTimeout(reconnectionTimer.value);
@@ -64,7 +55,6 @@ const clearReconnectionTimer = (): void => {
   }
 };
 
-// Handle connection close
 const handleConnectionClosed = (reason: string = "Connection closed"): void => {
   if (connectionStatus.value === "connected") {
     logs.value += `\n${reason}\n`;
@@ -198,7 +188,7 @@ const toggleMonitoring = async (): Promise<void> => {
 };
 
 // Add custom log message
-const addCustomLog = async (message: string, level: "INFO" | "ERROR" = "INFO"): Promise<void> => {
+const addCustomLog = async (message: string, level: "INFO" | "ERROR" | "INFO" = "INFO"): Promise<void> => {
   try {
     await axios.post(`/api/sessions/${props.sessionId}/logs`, null, {
       params: { message, level }
@@ -208,7 +198,6 @@ const addCustomLog = async (message: string, level: "INFO" | "ERROR" = "INFO"): 
       ? error.message 
       : (axios.isAxiosError(error) && error.response?.data?.detail) || "Unknown error";
     
-    // Check if the error is due to session not found/invalid
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       handleConnectionClosed("Session no longer exists");
       stopStreamingLogs();
@@ -220,10 +209,8 @@ const addCustomLog = async (message: string, level: "INFO" | "ERROR" = "INFO"): 
   }
 };
 
-// UI Handlers
 const handleScroll = (event: Event): void => {
   const element = event.target as HTMLElement;
-  // Calculate if we're near the bottom (within 50px)
   autoScroll.value = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
 };
 
@@ -231,9 +218,29 @@ const clearLogs = (): void => {
   logs.value = "";
 };
 
-// Determine if a line is an error
-const isErrorLine = (line: string): boolean => {
-  return line.toUpperCase().includes("ERROR");
+// Determine the log level of a line
+const getLogLevel = (line: string): 'info' | 'warning' | 'error' | 'critical' | 'normal' => {
+  const lowerLine = line.toLowerCase();
+  
+  const logLevelMatch = line.match(/- (INFO|WARNING|ERROR|CRITICAL) -/i);
+  
+  if (logLevelMatch) {
+    const level = logLevelMatch[1].toLowerCase();
+    if (level === 'info') return 'info';
+    if (level === 'warning') return 'warning';
+    if (level === 'error') return 'error';
+    if (level === 'critical') return 'critical';
+  }
+  
+  // Fallback for non-standard format
+  if (lowerLine.includes('❌ error:') || lowerLine.includes('🔥 critical:')) {
+    return 'error';
+  }
+  if (lowerLine.includes('⚠️ warning:')) {
+    return 'warning';
+  }
+  
+  return 'normal';
 };
 
 // Lifecycle Hooks
@@ -255,6 +262,24 @@ defineExpose({
   toggleMonitoring,
   reconnect
 });
+
+watch(logs, (newLogs) => {
+  // Remove the .map(line => line.trim()) part
+  logLines.value = newLogs
+    .split("\n")
+    // .map((line) => line.trim()) // <-- REMOVE THIS LINE
+    .filter((line) => line !== ""); // Keep filtering empty lines
+
+  // --- Optional: Keep the debugging log for verification ---
+  console.log("--- Log Lines (After Fix) ---");
+  logLines.value.forEach((line, index) => {
+      console.log(`Line ${index}:`, JSON.stringify(line));
+  });
+  console.log("----------------------------");
+  // --- End Debugging ---
+});
+
+
 </script>
 
 <template>
@@ -309,7 +334,11 @@ defineExpose({
       <div
         v-for="(line, index) in logLines"
         :key="index"
-        :class="{ 'error-line': isErrorLine(line) }"
+        :class="{
+          'log-line': true,
+          'error-line': getLogLevel(line) === 'error' || getLogLevel(line) === 'critical',
+          'warning-line': getLogLevel(line) === 'warning'
+        }"
       >
         {{ line }}
       </div>
@@ -430,20 +459,32 @@ defineExpose({
   flex: 1 1 auto;
   margin: 0;
   padding: 8px;
-  white-space: pre-wrap;
   word-wrap: break-word;
   font-size: 0.9em;
   line-height: 1.5;
   overflow-y: auto;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-x: auto;
 }
+
+
 
 .logs.auto-scroll {
   scroll-behavior: smooth;
+}
+
+.log-line {
+  margin-bottom: 2px;
+  white-space: pre-wrap;
 }
 
 .error-line {
   background-color: rgba(255, 0, 0, 0.2);
   color: #ffcdd2;
 }
+
+.warning-line {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #fff9c4;
+}
+
 </style>
