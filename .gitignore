@@ -2,3 +2,5 @@
 /frontend/node_modules/
 /backend/app/logs/
 poetry.lock
+/.idea
+/frontend/dist/
