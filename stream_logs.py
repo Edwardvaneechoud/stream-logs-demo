@@ -1,5 +1,7 @@
 import asyncio
 import json
+import time
+import psutil
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
@@ -22,24 +24,51 @@ app.add_middleware(
 )
 
 
-# SSE stream endpoint
+# Format data as SSE message
 async def format_sse_message(data: str) -> str:
+    """Format the data as a proper SSE message"""
     return f"data: {json.dumps(data)}\n\n"
 
 
-async def stream_counter() -> AsyncGenerator[str, None]:
-    for i in range(1, 10):
-        yield await format_sse_message(str(i))
-        await asyncio.sleep(1)
-    yield await format_sse_message("explode!")
+# Stream logs with system RAM usage
+async def stream_logs() -> AsyncGenerator[str, None]:
+    """Stream system RAM usage as log entries"""
+    # Initial log entry
+    yield await format_sse_message("Starting system RAM monitoring...")
+
+    # Send 20 RAM usage log entries
+    for i in range(1, 21):
+        # Get current timestamp
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+        # Get RAM usage
+        ram = psutil.virtual_memory()
+        ram_percent = ram.percent
+        ram_total = ram.total / (1024 * 1024 * 1024)  # Convert to GB
+        ram_used = ram_total * ram_percent/100
+        log_entry = f"{timestamp} - RAM usage: {ram_percent}% ({ram_used:.2f}GB / {ram_total:.2f}GB)"
+
+        yield await format_sse_message(log_entry)
+        await asyncio.sleep(1)  # One second delay between logs
+
+    # Final log entry
+    yield await format_sse_message("RAM monitoring completed")
 
 
+# API endpoint to stream logs
 @app.get("/api/stream")
-async def stream_logs():
+async def stream_logs_endpoint():
+    """Stream RAM usage logs using Server-Sent Events"""
     return StreamingResponse(
-        stream_counter(),
-        media_type="text/event-stream"
+        stream_logs(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "text/event-stream",
+        }
     )
+
 
 # Serve the HTML frontend from root path
 @app.get("/")

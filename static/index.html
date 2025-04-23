@@ -2,21 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Stream Demo</title>
+    <title>RAM Monitor Stream</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.global.min.js"></script>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
   <div id="app" class="container">
-    <h1>Live Counter Stream</h1>
-    <button @click="startStreaming" :disabled="isStreaming">Start Streaming</button>
+    <h1>🚀 System RAM Monitor</h1>
+    <button @click="startStreaming" :disabled="isStreaming">
+      Start Monitoring RAM
+    </button>
 
     <div class="log-container">
       <div v-for="(line, index) in logLines" :key="index" class="log-line">
         {{ line }}
       </div>
-      <div v-if="isStreaming && numberLine" class="log-line">{{ numberLine }}</div>
     </div>
   </div>
 
